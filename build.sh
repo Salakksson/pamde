@@ -1,18 +1,24 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -e
 
 CC=gcc
-CCFLAGS=" -Wall -O0 -g -fsanitize=address,undefined"
-LDFLAGS=" -fsanitize=address,undefined"
+CCFLAGS="\
+-Wall \
+-O0 -g \
+-fsanitize=address,undefined \
+-fno-PIE \
+"
 
-BUILD_DIR="build"
-BIN_DIR="$BUILD_DIR/bin"
-DEPFILE="$BUILD_DIR/.deps"
+LDFLAGS="\
+-ltcl86 \
+-fsanitize=address,undefined \
+-no-pie \
+"
 
-mkdir -p $BUILD_DIR
+BIN_DIR="./bin"
+
 mkdir -p $BIN_DIR
-touch $DEPFILE
 
 TARGET=./pamde
 
@@ -22,25 +28,25 @@ do
 	out=${file/src/$BIN_DIR}.o
 	objects="$objects $out"
 
-	skip=false
-
-	# for dep in $(.build/fastdep.sh $file -o $out -d $DEPFILE)
-	# do
-	#	if [ $file -nt $out ];
-	#	then
-	#		skip=false;
-	#	fi
-	# done
-
-	if $skip;
-	then
-		echo × skipping $file → $out
-		continue
-	fi
-
 	echo $CC -c $CCFLAGS $file -o $out
 	$CC -c $CCFLAGS $file -o $out
 done
 
 $CC $LDFLAGS $objects -o $TARGET
+
+# change for linux
+proccontrol -m aslr -s disable $TARGET
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -6,79 +6,6 @@
 #include <errno.h>
 #include <ctype.h>
 
-char* read_entire_file(const char* file)
-{
-	FILE* fp = fopen(file, "r");
-
-	fseek(fp, 0, SEEK_END);
-	size_t sz = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	char* buf = malloc(sz + 1);
-	fread(buf, 1, sz, fp);
-	buf[sz] = 0;
-
-	return buf;
-}
-
-const char* trim_whitespace(const char* str)
-{
-	for (; *str; str++)
-		if (!isspace(*str)) break;
-	return str;
-}
-
-bool handle_directive(config* conf, const char* line)
-{
-	printf("fuck u this is a todo, no directives\n");
-	exit(1);
-	return true;
-}
-
-bool parse_config_file_line(config* conf, const char* line)
-{
-	line = trim_whitespace(line);
-	if (!*line) return true;
-	if (*line == '!') return handle_directive(conf, line);
-
-	while (*line)
-	{
-		if (*line == '#') return true;
-		const char* eop = line;
-		while (!isspace(*++eop)); // TODO: kill gcc devs
-		size_t line_size = eop - line;
-		char* package = malloc(line_size + 1);
-		strncpy(package, line, line_size);
-		package[line_size] = 0;
-		da_append(conf->config_packages, package);
-		line = trim_whitespace(eop);
-	}
-
-	return 0;
-}
-
-bool parse_config_file(config* conf)
-{
-	/* char* config = read_entire_file(conf->file); TODO: improve */
-
-	size_t sz = 60;
-	char buf[sz];
-
-	FILE* fp = fopen(conf->file, "r");
-	if (!fp)
-	{
-		printf("failed to open file '%s': %s", conf->file, strerror(errno));
-		exit(1);
-	}
-
-	errno = 0;
-	while (fgets(buf, sz, fp))
-	{
-		parse_config_file_line(conf, buf);
-	}
-	return true;
-}
-
 bool query_system_packages(config* conf)
 {
 	_da_char_ buffer;
@@ -183,7 +110,7 @@ int add_packages(config* conf)
 
 int add_orphan_packages(config* conf)
 {
-
+	return 0;
 }
 
 int remove_packages(config* conf)
@@ -254,7 +181,7 @@ int handle_sync(config* conf)
 		conf->file = DEFAULT_CONFIG;
 	}
 
-	if (!parse_config_file(conf)) exit(1);
+	//if (!parse_config_file(conf)) exit(1);
 	if (!query_system_packages(conf)) exit(1);
 
 	da_sort_string(conf->config_packages);
