@@ -3,7 +3,7 @@
 set -e
 
 CC=gcc
-CCFLAGS=" -Wall -O0 -g -fsanitize=address,undefined -fno-sanitize=leak"
+CCFLAGS=" -Wall -Wpedantic -Werror -O0 -g -fsanitize=address,undefined -fno-sanitize=leak"
 LDFLAGS=" -fsanitize=address,undefined -fno-sanitize=leak"
 
 BUILD_DIR="build"

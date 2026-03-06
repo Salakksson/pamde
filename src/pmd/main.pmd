@@ -1,8 +1,9 @@
 
+def sourcename = "test.pmd";
 
+echo "sourcing file" sourcename;
 
-def main {
-	print test
-}
+source sourcename;
 
+echo "finished sourcing" sourcename;
 

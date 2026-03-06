@@ -36,3 +36,24 @@ d <dir>: optional directory
 package:
 name: regularly installed
 tmp:name: temporary
+
+
+* pde syntax
+
+** parens
+
+(st1; st2):
+	new scope, calls st1, calls and returns st2, evaluates beforehand
+
+((c -= a + b - c * (a - b))):
+	parse specially, return special syntax node
+	search for c, if doesnt exist throw, if
+
+{st1; st2}:
+	new scope, calls st1, calls and returns st2, evaluates when called
+
+** ! while, for, calc, test
+** ? shell block
+** !! modify variables of previous scope
+** !! int literals
+** ? float literals

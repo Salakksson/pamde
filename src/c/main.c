@@ -48,6 +48,7 @@ char* get_source_name(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+	msg_set_level(MSG_DEBUG);
 	__lsan_disable();
 	/* const char* source_file = get_source_name(argc, argv); */
 	pmd p = {0};
