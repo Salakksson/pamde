@@ -1,4 +1,15 @@
 # pamde - declarative wrapper for pacman
+
+## Important notice (clone the "shell" branch instead of master)
+Over time this project has had many ideas which have all become branches on this repo, 
+and currently the only one which works is the original shell version (on the "shell" branch).
+The "master" branch is just an older version of the "pmd" branch which was pretty much an ancient
+version of the tau programming language.
+
+The main development branch is "tcl" where I am working on reimplementing pamde using tcl as a config language.
+
+TLDR: If you want to try out pamde clone the "shell" branch
+
 ## The pamde philosophy
 Pamde is not a package manager, it is a philosophy - a way of life. \
 The idea is to track your system in a file to ensure no bloat enters its way into your system. \
