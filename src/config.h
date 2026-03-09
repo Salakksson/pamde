@@ -3,17 +3,11 @@
 
 #include "da.h"
 
-#define DEFAULT_CONFIG "urmom.pam"
-
 typedef struct
 {
 	char mode;
 	const char* file;
 	DA(char) flags;
-	DA(char*) config_packages;
-	DA(char*) installed_packages;
-	DA(char*) add_packages;
-	DA(char*) remove_packages;
 	DA(const char*) args;
 } config;
 

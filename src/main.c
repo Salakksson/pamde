@@ -1,46 +1,21 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #define CONFIG_H_IMPLEMENTATION
 #include "config.h"
-#include "pacman.h"
 
-#include <tcl8.6/tcl.h>
-
-void pamde(config* conf)
-{
-
-}
-
-int RunBashCmd(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int objc,
-	Tcl_Obj *const objv[]
-) {
-    if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "bash_command_string");
-        return TCL_ERROR;
-    }
-
-    // Extract the string argument from the Tcl object
-    const char *shell_script = Tcl_GetString(objv[1]);
-
-    // Execute the string using the system shell
-    int status = system(shell_script);
-
-    if (status == -1) {
-        Tcl_SetObjResult(interp, Tcl_NewStringObj("Failed to execute shell command", -1));
-        return TCL_ERROR;
-    }
-
-    return TCL_OK;
-}
+#include <tcl.h>
 
 char* read_entire_file(const char* file)
 {
 	FILE* fp = fopen(file, "r");
 
+	if (!fp) {
+		fprintf(stderr, "file is not readable: %s\n", file);
+		return calloc(0, 0);
+	}
 	fseek(fp, 0, SEEK_END);
 	size_t sz = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
@@ -56,86 +31,129 @@ char* read_entire_file(const char* file)
 	return buf;
 }
 
-int test(int argc, char *argv[]) {
-    // Create the Tcl Interpreter
-    Tcl_Interp *interp = Tcl_CreateInterp();
+int cmd_run_bash(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int objc,
+	Tcl_Obj *const objv[]
+) {
+	puts("running bash command");
+	if (objc < 2)
+	{
+		Tcl_WrongNumArgs(interp, 1, objv, "script ?arg ...?");
+		return TCL_ERROR;
+	}
 
-    if (Tcl_Init(interp) != TCL_OK) {
-        fprintf(stderr, "Tcl_Init error: %s\n", Tcl_GetStringResult(interp));
-        return EXIT_FAILURE;
-    }
+	const char* bash_block = Tcl_GetString(objv[1]);
 
-    // Register our custom 'run_bash' command
-    Tcl_CreateObjCommand(interp, "run_bash", RunBashCmd, NULL, NULL);
+	int inpipe[2];
+	int outpipe[2];
 
-    // The Tcl script we want to run
-    char *script = read_entire_file("test.tcl");
+	pipe(inpipe);
+	pipe(outpipe);
 
-    // Execute the script
-    if (Tcl_Eval(interp, script) != TCL_OK) {
-        fprintf(stderr, "Tcl_Eval error: %s\n", Tcl_GetStringResult(interp));
-	free(script);
-        return EXIT_FAILURE;
-    }
+	pid_t pid = fork();
 
-    // Cleanup
-    Tcl_DeleteInterp(interp);
-    free(script);
-    return EXIT_SUCCESS;
+	if (pid == 0)
+	{
+		dup2(inpipe[0], STDIN_FILENO);
+		dup2(outpipe[1], STDOUT_FILENO);
+
+		close(inpipe[1]);
+		close(outpipe[0]);
+
+		char** argv = malloc(sizeof(char*) * (objc + 2));
+		argv[0] = "bash";
+		for(int i = 2; i < objc; i++)
+		{
+			argv[i-1] = Tcl_GetString(objv[i]);
+		}
+
+		argv[objc-1] = NULL;
+
+		execvp("bash", argv);
+		exit(1);
+	}
+
+	close(inpipe[0]);
+	close(outpipe[1]);
+
+	write(inpipe[1], bash_block, strlen(bash_block));
+	close(inpipe[1]);
+
+	Tcl_Obj* result = Tcl_NewStringObj("", 0);
+
+	char buffer[1024];
+	ssize_t n;
+
+	while ((n = read(outpipe[0], buffer, sizeof(buffer))) > 0)
+	{
+		Tcl_AppendToObj(result, buffer, n);
+	}
+
+	close(outpipe[0]);
+	waitpid(pid, NULL, 0);
+
+	Tcl_SetObjResult(interp, result);
+	return TCL_OK;
+}
+
+void cmd_get_env(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int objc,
+	Tcl_Obj *const objv[]
+) {
+
+}
+
+void add_cmd(Tcl_Interp* interp, const char* name, Tcl_ObjCmdProc cmd)
+{
+	Tcl_CreateObjCommand(interp, name, cmd, NULL, NULL);
 }
 
 int main(int argc, char** argv)
 {
-	return test(argc, argv);
 	config conf = {0};
 	da_construct(conf.args, 5);
 	da_construct(conf.flags, 5);
-	da_construct(conf.config_packages, 50);
-	da_construct(conf.installed_packages, 50);
-	da_construct(conf.add_packages, 10);
-	da_construct(conf.remove_packages, 10);
 	for (int i = 1; i < argc; i++)
 	{
 		if (!parse_arg(&conf, argv[i]))
 			display_help(conf.mode, 1);
 	}
 
-	// Display help
 	da_append(conf.flags, '\0');
 	if (strchr(conf.flags.items, 'h'))
 		display_help(conf.mode, 0);
 
-	pamde(&conf);
+	Tcl_Interp* interp = Tcl_CreateInterp();
 
-	int exit_code = 1;
-	switch (conf.mode)
+	if (Tcl_Init(interp) != TCL_OK)
 	{
-	case 'S':
-		exit_code = handle_sync(&conf);
-		break;
-	case 'Q':
-		exit_code = handle_query(&conf);
-		break;
-	case 'T':
-		exit_code = handle_temp(&conf);
-		break;
-	case 'C':
-		exit_code = handle_container(&conf);
-		break;
-	case 'P':
-		exit_code = handle_push(&conf);
-		break;
-	default: puts("unimplemented mode");
-		exit_code = 1;
-		break;
+		fprintf(
+			stderr,
+			"Tcl_Init error: %s\n",
+			Tcl_GetStringResult(interp)
+		);
+		return 1;
 	}
+
+	Tcl_CreateNamespace(interp, "-", NULL, NULL);
+	add_cmd(interp, "-::run-bash", cmd_run_bash);
+
+	if (Tcl_EvalFile(interp, "init.tcl") != TCL_OK)
+	{
+		fprintf(
+			stderr,
+			"Tcl_Eval error: %s\n",
+			Tcl_GetStringResult(interp)
+		);
+		return 1;
+	}
+	Tcl_DeleteInterp(interp);
 
 	da_delete(conf.flags);
 	da_delete(conf.args);
-	da_delete(conf.config_packages);
-	da_delete(conf.installed_packages);
-	da_delete(conf.add_packages);
-	da_delete(conf.remove_packages);
 
-	return exit_code;
 }

@@ -4,6 +4,7 @@ set -e
 
 CC=gcc
 CCFLAGS="\
+$(pkg-config --cflags tcl) \
 -Wall \
 -O0 -g \
 -fsanitize=address,undefined \
@@ -11,7 +12,7 @@ CCFLAGS="\
 "
 
 LDFLAGS="\
--ltcl86 \
+$(pkg-config --libs tcl) \
 -fsanitize=address,undefined \
 -no-pie \
 "
@@ -35,8 +36,8 @@ done
 $CC $LDFLAGS $objects -o $TARGET
 
 # change for linux
-proccontrol -m aslr -s disable $TARGET
-
+#proccontrol -m aslr -s disable $TARGET
+$TARGET
 
 
 
