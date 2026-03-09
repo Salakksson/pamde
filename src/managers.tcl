@@ -1,23 +1,3 @@
-set config_file "/usr/local/etc/pamde.tcl"
-# temporary
-set config_file "./config.tcl"
-
-proc help {} {
-	puts "TODO: add help functionality"
-}
-
-proc packages {list} {
-	puts "packages:" $list
-}
-
-proc bash {code args} {
-	exec bash -s -- {*}$args << $code
-}
-
-bash {
-echo $1, $2, $3
-} foo bar baz
-
 namespace eval pacman {
 	proc query-explicit {} {
 		bash {
@@ -103,16 +83,3 @@ namespace eval pamde {
 		${manager}::query-explicit
 	}
 }
-
-
-proc main {} {
-	#source $config_file
-
-	puts [ bash {
-		echo $Z1
-		echo $Z2
-		echo $Z3
-	} arg1 arg2 arg3 ]
-}
-
-main
