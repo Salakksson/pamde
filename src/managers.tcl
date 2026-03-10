@@ -7,26 +7,20 @@ namespace eval pacman {
 
 	proc query-all {} {
 		bash {
-			pacman -Qqe
+			pacman -Qq
 		}
 	}
 
 	proc query-orphan {} {
 		bash {
-			pacman -Qqe
+			pacman -Qdtq
 		}
 	}
 
-	proc install {pack} {
+	proc install {packages} {
 		bash {
 			pacman -S $1
-		} $pack
-	}
-
-	proc sync {} {
-		bash {
-			pacman -Syy
-		}
+		} $packages
 	}
 
 	proc update {} {
@@ -39,27 +33,31 @@ namespace eval pacman {
 namespace eval dnf {
 	proc query-explicit {} {
 		bash {
-			dnf repoquery --userinstalled
+			dnf repoquery --userinstalled --qf "%{name} "
+		}
+	}
+
+	proc query-all {} {
+		bash {
+			dnf repoquery --userinstalled --qf "%{name} "
 		}
 	}
 
 	proc query-orphan {} {
 		bash {
-			dnf repoquery --unneeded
-		}
-	}
-}
-
-namespace eval apt {
-	proc query-explicit {} {
-		bash {
-			apt-mark showmanual
+			dnf repoquery --unneeded --qf "%{name} "
 		}
 	}
 
-	proc query-orphan {} {
+	proc install {packages} {
 		bash {
-			apt autoremove --dry-run
+			dnf install $1
+		} $packages
+	}
+
+	proc update {} {
+		bash {
+			dnf upgrade
 		}
 	}
 }
@@ -78,7 +76,7 @@ namespace eval pkg {
 	}
 }
 
-namespace eval pamde {
+namespace eval managers {
 	proc query-explicit {manager} {
 		${manager}::query-explicit
 	}
