@@ -1,0 +1,17 @@
+#!/usr/bin/env tclsh
+
+pkg tcl {
+	description "TCL programming language"
+	from-repo dnf "tcl8"
+	from-repo pacman "tcl"
+	makedepends {}
+}
+
+pkg pamde {
+	description "I wonder?"
+	makedepends {}
+	depends {tcl}
+
+	provides {pamde}
+}
+

@@ -53,6 +53,24 @@ proc bash {code args} {
 	exec bash -s -- {*}$args << $code
 }
 
+
+proc modify-foo {value} {
+	upvar foo foo
+	set foo value
+}
+
+proc print-foo {} {
+	puts $foo
+}
+
+set foo 13
+
+modify-foo 14
+
+puts $foo // prints 14
+
+print-foo // crashes
+
 proc diff {a b} {
 	set map {}
 	foreach x $b {
@@ -75,6 +93,8 @@ proc diff {a b} {
 
 	return [list $a_only $b_only $common]
 }
+
+return
 
 source $config_file
 
