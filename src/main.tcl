@@ -24,11 +24,13 @@ set config_file "./config.tcl"
 # source-web
 # yay-like ignores
 
-
 namespace eval pamde {
+	variable config [dict create]
+	set config [dict add $config wanted ""]
 	variable wanted ""
 	variable repos ""
 	variable packages ""
+	variable manager ""
 	proc want {packages} {
 		variable wanted
 		lappend wanted {*}$packages
@@ -43,6 +45,23 @@ namespace eval pamde {
 		variable packages
 		set packages [dict set $packages $name $values]
 	}
+
+	proc set-manager {m} {
+		variable manager
+		if [namespace exists $m] {
+			set manager $m
+		} else {
+			puts "no package manager $m exists"
+		}
+	}
+
+	proc hostname {} {
+		bash "hostname"
+	}
+
+	proc verbosity {value} {
+
+	}
 }
 
 proc help {} {
@@ -52,24 +71,6 @@ proc help {} {
 proc bash {code args} {
 	exec bash -s -- {*}$args << $code
 }
-
-
-proc modify-foo {value} {
-	upvar foo foo
-	set foo value
-}
-
-proc print-foo {} {
-	puts $foo
-}
-
-set foo 13
-
-modify-foo 14
-
-puts $foo // prints 14
-
-print-foo // crashes
 
 proc diff {a b} {
 	set map {}
@@ -94,16 +95,32 @@ proc diff {a b} {
 	return [list $a_only $b_only $common]
 }
 
-return
+
+proc program-exists {program} {
+
+}
+
+proc guess-manager {} {
+	return pkg
+}
+
+set manager $pamde::manager
+
+if {$manager eq ""} {
+	set manager [guess-manager]
+
+	puts "Detected package manager $manager automatically"
+	puts "Use `set-manager <package manager>` to choose the package manager"
+}
 
 source $config_file
 
 puts "wanted: ${pamde::wanted}"
 
-set all-packages [diff $pamde::wanted [dnf::query-explicit]]
+set all-packages [diff $pamde::wanted [${manager}::query-explicit]]
 
-set remove [lindex ${all-packages} 0]
-set add [lindex ${all-packages} 1]
+set add [lindex ${all-packages} 0]
+set remove [lindex ${all-packages} 1]
 
 puts "add: $add"
 puts "remove: $remove"

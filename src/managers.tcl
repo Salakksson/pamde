@@ -18,13 +18,13 @@ namespace eval pacman {
 	}
 
 	proc install {packages} {
-		bash {
+		bash-sudo {
 			pacman -S $1
 		} $packages
 	}
 
 	proc update {} {
-		bash {
+		bash-sudo {
 			pacman -Syyu
 		}
 	}
@@ -50,13 +50,13 @@ namespace eval dnf {
 	}
 
 	proc install {packages} {
-		bash {
+		bash-sudo {
 			dnf install $1
 		} $packages
 	}
 
 	proc update {} {
-		bash {
+		bash-sudo {
 			dnf upgrade
 		}
 	}
@@ -69,11 +69,30 @@ namespace eval pkg {
 		}
 	}
 
-	proc query-orphan {} {
+	proc query-all {} {
 		bash {
-			pkg autoremove -n
+			pkg query '%n'
 		}
 	}
+
+	proc query-orphan {} {
+		bash {
+			pkg query -e '%a = 1 && %?r = 0' '%n'
+		}
+	}
+
+	proc install {packages} {
+		bash-sudo {
+			pkg install $1
+		} $packages
+	}
+
+	proc update {} {
+		bash-sudo {
+			pkg upgrade
+		}
+	}
+
 }
 
 namespace eval managers {

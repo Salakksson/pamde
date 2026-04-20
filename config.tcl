@@ -1,191 +1,53 @@
 puts "beginning of config"
 
+pamde::set-manager pkg
+pamde::verbosity 3
+
+switch [pamde::hostname] {
+	default {
+
+	}
+}
+
 pamde::want {
-	NetworkManager
-	Thunar
-	akmod-nvidia
-	alsa-lib-devel
-	alsa-utils
-	atuin
-	audacity
-	audit
-	authselect
-	autoconf
-	automake
-	bash
-	bat
-	btrfs-progs
-	cargo
-	chrony
 	clang
-	cloc
-	coreutils
-	curl
-	deepin-picker
-	dhcp-client
-	discord
+	alacritty
+	atuin
+	ccls
 	dmenu
-	dnf5-plugins
-	dosfstools
-	dotnet-host
-	dotnet-sdk-8.0
-	dotnet-sdk-9.0
-	dracut-config-rescue
-	du-dust
-	e2fsprogs
-	efibootmgr
-	emacs-gtk+x11
-	fastfetch
+	drm-kmod
+	emacs
+	en-freebsd-doc
 	feh
-	ffmpeg
-	ffmpeg-libs
-	fftw-devel
-	filesystem
-	firewalld
-	fltk-devel
-	fltk-fluid
-	fluidsynth-devel
-	fontconfig-devel
-	freetype-devel
-	fwupd
-	gcc-c++
-	gh
-	giflib-devel
+	gcc
+	gdb
 	git
-	glibc
-	glibc-devel
-	gnutls-devel
-	grub2-efi-x64
-	grub2-tools
-	grub2-tools-extra
-	grubby
-	gtest-devel
-	gtk3-devel
-	heroic-games-launcher-bin
-	hostname
-	htop
-	iproute
-	iputils
-	json-c-devel
-	kbd
-	kernel
-	kernel-core
-	kernel-modules
-	kernel-modules-core
-	kernel-modules-extra
+	gpu-firmware-intel-kmod-kabylake
 	kitty
-	kmod-nvidia-6.18.13-200.fc43.x86_64
-	kmod-nvidia-6.18.5-200.fc43.x86_64
-	kmod-nvidia-6.18.9-200.fc43.x86_64
-	langpacks-en_GB
-	less
-	libX11-devel
-	libXaw-devel
-	libXft-devel
-	libXpm-devel
-	libarchive-devel
-	libasan
-	libcurl-devel
-	libcxx
-	libcxx-devel
-	libcxxabi-devel
-	libgccjit-devel
-	libjpeg-turbo-devel
-	libogg-devel
 	libqalculate
 	librewolf
-	libsamplerate-devel
-	libsndfile-devel
-	libstdc++-static
-	libtiff-devel
-	libubsan
-	libvorbis-devel
-	lilypond
-	lmms
-	love
-	lv2-carla
 	maim
-	man-db
 	mpv
-	musescore
-	ncurses
-	ncurses-devel
-	neovim
-	nginx
-	ninja-build
-	nodejs-devel
-	obs-studio
-	onefetch
-	openssh-clients
-	openssh-server
-	parted
+	nerd-fonts
 	pavucontrol
-	perl-XML-Parser
 	picom
-	plymouth
-	policycoreutils
-	prefixdevname
-	procps-ng
-	pulseaudio-libs-devel
-	pulseaudio-utils
-	qalculate
-	qbittorrent
-	qpwgraph
-	qt5-qtbase-devel
-	qt5-qtbase-private-devel
-	qt5-qtsvg-devel
-	qt5-qtx11extras-devel
-	qtractor
-	rootfiles
-	rpm
-	rpmfusion-free-release
-	rpmfusion-nonfree-release
-	rsync
-	rust
-	sdl2-compat-devel
-	selinux-policy-targeted
-	setup
-	shadow-utils
-	shim-x64
-	sssd-common
-	sssd-kcm
-	steam
-	stk-devel
+	pipewire
+	pkg
+	pkgconf
 	stow
 	sudo
-	systemd
-	systemd-resolved
-	tcl
-	tcl8
-	tcl8-devel
-	tcl8-tcllib
-	texinfo
-	tinyxml2-devel
-	tree
-	util-linux
-	vesktop
-	vim-enhanced
-	vim-minimal
-	virt-manager
-	vital
-	wget2-wget
-	wine
-	wine-devel
-	xcb-util-devel
-	xcb-util-keysyms-devel
+	tcl86
+	typst
+	wget
+	wifi-firmware-iwlwifi-kmod-8000
+	wireplumber
 	xclip
-	xeyes
-	xorg-x11-drv-nvidia-cuda
-	xorg-x11-server-Xorg
-	xorg-x11-server-devel
-	xorg-x11-xinit
-	xpad
-	xrandr
-	xterm
+	xinit
+	xorg
+	xwallpaper
 	zathura
 	zathura-pdf-poppler
 	zoxide
-	zram-generator-defaults
 	zsh
 }
 
