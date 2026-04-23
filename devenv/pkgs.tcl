@@ -4,7 +4,6 @@ pkg tcl {
 	description "TCL programming language"
 	from-repo dnf "tcl8"
 	from-repo pacman "tcl"
-	makedepends {}
 }
 
 pkg pamde {
@@ -13,5 +12,17 @@ pkg pamde {
 	depends {tcl}
 
 	provides {pamde}
+
+	build {
+
+	}
+
+	install {
+
+	}
+
+	uninstall {
+
+	}
 }
 

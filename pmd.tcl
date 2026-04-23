@@ -86,6 +86,10 @@ proc pkg_validate {pkg} {
 	set is_offloaded ""
 	set has_depends ""
 
+	if {![dict exists $pkg description]} {
+		set valid false
+		lappend errs "missing description"
+	}
 	# check if package has a valid build recipe
 
 	set build_fields "build install uninstall makedepends"
@@ -122,7 +126,7 @@ proc pkg_validate {pkg} {
 	}
 
 	# TODO: VALIDATE ANY FIELDS WHICH MUST BE VALID
-	return [list $valid $errs];
+	return [list $valid $errs $is_buildable $is_offloaded];
 }
 
 proc api_pkg {name block} {
@@ -146,6 +150,8 @@ proc api_pkg {name block} {
 	set validity [pkg_validate $pkg]
 	set is_valid [lindex $validity 0]
 	set errors [lindex $validity 1]
+	set buildable [lindex $validity 2]
+
 	if {!$is_valid} {
 		set msg "Package '$pkg_name' is invalid for the reason(s):";
 
@@ -153,6 +159,12 @@ proc api_pkg {name block} {
 			set msg "$msg\n - $err"
 		}
 		error $msg
+	}
+
+	foreach field "depends makedepends description" {
+		if {![dict exists $pkg $field]} {
+			dict set pkg $field ""
+		}
 	}
 
 	dict set pkgs $pkg_name $pkg
@@ -179,21 +191,71 @@ proc source_safe {file} {
 	# append changes to db once i have decided on format
 }
 
-proc pkg_deps_recursive {pkg kinds} {
+proc dict-getdef {args} {
 	global pkgs
-	set all_deps ""
+	set default [lindex $args end]
+	set args [lrange $args 0 end-1]
 
-	set deps ""
-	foreach kind $kinds {
-		lappend deps [dict get $pkgs $pkg $kind]
+	if {[dict exists {*}$args]} {
+		return [dict get {*}$args]
+	} else {
+		puts "using default value {$default}"
+		return $default
 	}
-	foreach dep $deps {
-		lappend all_deps [pkg_deps_recursive $dep $kinds]
+}
+
+proc get_package {pkg_name} {
+	global pkgs
+	return [dict-getdef $pkgs $pkg_name ""]
+}
+
+proc pkg_deps {pkg_name} {
+	puts "pkg_deps $pkg_name"
+
+	set pkg [get_package $pkg_name]
+	if {$pkg eq ""} {
+		return [list 0 true "dependency $dep does not exist"]
 	}
+
+	set depends [dict-getdef $pkg depends ""]
+	set makedepends [dict-getdef $pkg makedepends ""]
+	set root_deps [list {*}$depends {*}$makedepends]
+	puts "depends: $depends"
+	puts "makedepends: $makedepends"
+	puts "root_deps: $root_deps"
+
+	set failed false
+	set errs ""
+	foreach dep $root_deps {
+		puts "checking dependency $dep"
+		set result [pkg_deps $dep]
+		set r_deps [lindex result 0]
+		set r_failed [lindex result 1]
+		set r_errs [lindex result 2]
+
+		lappend root_deps {*}$r_deps
+		puts "r_failed: $r_failed"
+		if {$r_failed} {
+			set failed true
+			lappend errs {*}$r_errs
+		}
+	}
+
+	return [list $root_deps $failed $errs]
 }
 
 proc init {} {
 	global safe_interp fields
+
+	pkg_field_dict from-repo
+	pkg_field_var description
+	pkg_field_var makedepends
+	pkg_field_var depends
+	pkg_field_var provides
+	pkg_field_var build
+	pkg_field_var install
+	pkg_field_var uninstall
+
 
 	# verbose "setting up interpreter"
 	set safe_interp [interp create -safe]
@@ -207,18 +269,14 @@ proc init {} {
 	foreach field [concat $fields $api] {
 		interp alias $safe_interp $field {} api_${field}
 	}
-}
 
-pkg_field_dict from-repo
-pkg_field_var description
-pkg_field_var makedepends
-pkg_field_var depends
-pkg_field_var provides
+	source_safe devenv/pkgs.tcl
+}
 
 init
 
-source_safe pkglist.tcl
-
 puts "pkgs: $pkgs"
 
-puts [pkg_deps_recursive pamde depends-make]
+puts [pkg_deps pamde]
+
+

@@ -72,6 +72,10 @@ proc bash {code args} {
 	exec bash -s -- {*}$args << $code
 }
 
+proc bash-sudo {code args} {
+	exec sudo bash -s -- {*}$args << $code
+}
+
 proc diff {a b} {
 	set map {}
 	foreach x $b {
