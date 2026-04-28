@@ -8,13 +8,19 @@ set pkg ""
 set pkg_name ""
 # list of valid fields for a package
 set fields ""
+# interpreter for parsing packages
+set safe_interp ""
 
-proc info {} {
-	global db
-	puts "db: $db"
-	foreach key $keys {
-		set value [dict get $db $key]
-		puts "$key: $value"
+# unpacks struct into separate variables
+proc unpack {struct args} {
+	if {[llength $struct] != [llength $args]} {
+		error "cannot unpack struct:\n$struct\ninto:\n$args"
+	}
+	for {set i 0} {$i < [llength $args]} {incr i} {
+		set varname [lindex $args $i]
+		set value [lindex $struct $i]
+		upvar 1 $varname $varname
+		set $varname $value
 	}
 }
 
@@ -210,31 +216,25 @@ proc get_package {pkg_name} {
 }
 
 proc pkg_deps {pkg_name} {
-	puts "pkg_deps $pkg_name"
-
 	set pkg [get_package $pkg_name]
 	if {$pkg eq ""} {
-		return [list 0 true "dependency $dep does not exist"]
+		return [list 0 true "package $pkg_name does not exist"]
 	}
 
 	set depends [dict-getdef $pkg depends ""]
 	set makedepends [dict-getdef $pkg makedepends ""]
 	set root_deps [list {*}$depends {*}$makedepends]
-	puts "depends: $depends"
-	puts "makedepends: $makedepends"
-	puts "root_deps: $root_deps"
 
 	set failed false
 	set errs ""
 	foreach dep $root_deps {
-		puts "checking dependency $dep"
-		set result [pkg_deps $dep]
-		set r_deps [lindex result 0]
-		set r_failed [lindex result 1]
-		set r_errs [lindex result 2]
+		# set result [pkg_deps $dep]
+		# set r_deps [lindex $result 0]
+		# set r_failed [lindex $result 1]
+		# set r_errs [lindex $result 2]
+		unpack [pkg_deps $dep] r_deps r_failed r_errs
 
 		lappend root_deps {*}$r_deps
-		puts "r_failed: $r_failed"
 		if {$r_failed} {
 			set failed true
 			lappend errs {*}$r_errs
@@ -242,6 +242,43 @@ proc pkg_deps {pkg_name} {
 	}
 
 	return [list $root_deps $failed $errs]
+}
+
+proc pkg_install_raw {pkg_name} {
+	set failed false
+	set errs ""
+
+	set pkg [get_package $pkg_name]
+
+	cd ./$pkg_name
+	exec [dict get $pkg build]
+	cd ./$pkg_name
+	exec [dict get $pkg install]
+
+	return [list $failed $errs]
+}
+
+proc pkg_install {pkg_name} {
+	unpack [pkg_deps $pkg_name] deps failed errs
+	if {$failed} {
+		error "cannot find dependencies of $pkg_name:\n$errs"
+	}
+
+	foreach dep $deps {
+		unpack [pkg_install_raw $dep] r_failed r_errs
+		if {$r_failed} {
+			set failed true
+			lappend errs {*}$r_errs
+		}
+	}
+
+	unpack [pkg_install_raw $pkg_name] r_failed r_errs
+	if {$r_failed} {
+		set failed true
+		lappend errs {*}$r_errs
+	}
+
+	return [list $failed $errs]
 }
 
 proc init {} {
@@ -256,8 +293,6 @@ proc init {} {
 	pkg_field_var install
 	pkg_field_var uninstall
 
-
-	# verbose "setting up interpreter"
 	set safe_interp [interp create -safe]
 
 	foreach cmd [interp eval $safe_interp {info commands}] {
@@ -275,8 +310,7 @@ proc init {} {
 
 init
 
-puts "pkgs: $pkgs"
-
 puts [pkg_deps pamde]
 
 
+pkg_install pamde

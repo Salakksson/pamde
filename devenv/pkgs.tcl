@@ -18,11 +18,15 @@ pkg pamde {
 	}
 
 	install {
-
+		bash {
+			touch pamde.test
+		}
 	}
 
 	uninstall {
-
+		bash {
+			rm pamde.test
+		}
 	}
 }
 
